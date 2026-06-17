@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>新奇特项目极速选品认领台</title>
+<style>
+  :root{
+    --bg:#f4f1ea;
+    --paper:#fbfaf6;
+    --ink:#1d1b16;
+    --ink-soft:#5c574c;
+    --line:#e0dacb;
+    --accent:#c0432b;
+    --accent-soft:#f3d9d1;
+    --gold:#a07b2d;
+    --green:#3f6f4a;
+    --shadow:0 1px 2px rgba(40,33,20,.06),0 8px 24px rgba(40,33,20,.06);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:"Noto Serif SC","Songti SC",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    -webkit-font-smoothing:antialiased;
+    line-height:1.5;
+  }
+  .wrap{max-width:1480px;margin:0 auto;padding:0 clamp(14px,3vw,40px);}
+
+  /* ---------- header ---------- */
+  header.top{
+    border-bottom:2px solid var(--ink);
+    background:var(--paper);
+    position:sticky;top:0;z-index:40;
+  }
+  .top-row{display:flex;align-items:flex-end;justify-content:space-between;padding:18px 0 14px;gap:16px;flex-wrap:wrap;}
+  .brand{display:flex;flex-direction:column;gap:2px;}
+  .brand h1{
+    font-size:clamp(22px,2.6vw,34px);
+    margin:0;letter-spacing:.5px;font-weight:800;
+  }
+  .brand .sub{font-size:12px;letter-spacing:3px;text-transform:uppercase;color:var(--ink-soft);}
+  .top-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+  .search-box{position:relative;display:flex;align-items:center;}
+  .search-box .search-ico{position:absolute;left:11px;font-size:13px;opacity:.55;pointer-events:none;}
+  .search-box input{
+    width:230px;padding:9px 30px 9px 32px;border:1.5px solid var(--line);border-radius:999px;
+    background:var(--paper);color:var(--ink);font-size:13px;font-family:inherit;transition:border-color .15s ease,width .2s ease;
+  }
+  .search-box input:focus{outline:none;border-color:var(--ink);width:270px;}
+  .search-clear{
+    position:absolute;right:8px;width:20px;height:20px;border-radius:50%;background:#ece7da;color:var(--ink-soft);
+    font-size:15px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0;
+  }
+  .search-clear:hover{background:var(--accent);color:#fff;}
+  @media(max-width:560px){.search-box input{width:160px;}.search-box input:focus{width:180px;}}
+
+  button{font-family:inherit;cursor:pointer;border:none;}
+  .btn{
+    border:1.5px solid var(--ink);background:var(--paper);color:var(--ink);
+    padding:9px 16px;font-size:13px;font-weight:600;border-radius:2px;
+    transition:transform .12s ease,background .15s ease,color .15s ease;
+  }
+  .btn:hover{transform:translateY(-1px);}
+  .btn.solid{background:var(--ink);color:var(--paper);}
+  .btn.solid:hover{background:var(--accent);border-color:var(--accent);}
+  .btn.tiny{padding:6px 11px;font-size:12px;}
+
+  /* ---------- tabs ---------- */
+  .tabs{display:flex;gap:6px;overflow-x:auto;padding:0 0 12px;scrollbar-width:thin;}
+  .tab{
+    white-space:nowrap;border:1.5px solid var(--line);background:transparent;
+    padding:8px 16px;border-radius:999px;font-size:14px;font-weight:600;color:var(--ink-soft);
+    display:flex;align-items:center;gap:8px;transition:all .15s ease;
+  }
+  .tab:hover{border-color:var(--ink);color:var(--ink);}
+  .tab.active{background:var(--ink);color:var(--paper);border-color:var(--ink);}
+  .tab .cnt{
+    font-size:11px;background:rgba(0,0,0,.08);padding:1px 7px;border-radius:999px;font-weight:700;
+  }
+  .tab.active .cnt{background:rgba(255,255,255,.22);}
+  .tab.tab-fav{border-color:var(--accent-soft);color:var(--accent);}
+  .tab.tab-fav:hover{border-color:var(--accent);color:var(--accent);}
+  .tab.tab-fav.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+  /* ---------- main layout ---------- */
+  .layout{display:grid;grid-template-columns:1fr 340px;gap:clamp(18px,2.5vw,36px);padding:26px 0 70px;align-items:start;}
+  main{padding:0 0 70px;}
+
+  .section-head{display:flex;align-items:baseline;justify-content:space-between;margin:0 0 18px;gap:12px;flex-wrap:wrap;}
+  .section-head h2{font-size:clamp(18px,2vw,26px);margin:0;font-weight:800;}
+  .section-head .meta{font-size:13px;color:var(--ink-soft);}
+
+  /* product grid */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:18px;}
+  .card{
+    background:var(--paper);border:1px solid var(--line);border-radius:4px;overflow:hidden;
+    box-shadow:var(--shadow);display:flex;flex-direction:column;transition:transform .15s ease,box-shadow .15s ease;
+  }
+  .card:hover{transform:translateY(-3px);box-shadow:0 10px 30px rgba(40,33,20,.12);}
+  .card .ph{aspect-ratio:1/1;background:#ece7da;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;}
+  .card .ph img{width:100%;height:100%;object-fit:cover;display:block;}
+  .card .ph .noimg{color:#b3ab95;font-size:13px;letter-spacing:2px;}
+  .card.card-pick{border-color:var(--gold);box-shadow:0 1px 2px rgba(160,123,45,.18),0 8px 24px rgba(160,123,45,.12);}
+  .pick-corner{position:absolute;top:0;left:0;z-index:2;background:var(--gold);color:#fff;font-size:11px;font-weight:700;padding:4px 10px;border-bottom-right-radius:8px;letter-spacing:.5px;}
+  .fav-btn{position:absolute;top:8px;right:8px;z-index:3;width:34px;height:34px;border-radius:50%;background:rgba(251,250,246,.92);color:var(--accent);font-size:17px;line-height:1;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(40,33,20,.18);transition:transform .12s ease,background .15s ease;}
+  .fav-btn:hover{transform:scale(1.12);background:#fff;}
+  .fav-btn.on{background:var(--accent);color:#fff;}
+  .mark-tag{align-self:flex-start;font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px;}
+  .mark-pick{color:#fff;background:var(--gold);}
+  .mark-normal{color:var(--ink-soft);background:#ece7da;}
+  .card .body{padding:13px 14px 15px;display:flex;flex-direction:column;gap:9px;flex:1;}
+  .card .title{font-size:14px;font-weight:600;line-height:1.4;min-height:2.7em;}
+  .card .cat-pill{align-self:flex-start;font-size:11px;color:var(--accent);background:var(--accent-soft);padding:2px 9px;border-radius:999px;font-weight:700;}
+  .card .claimed{
+    margin-top:auto;font-size:12px;color:var(--green);background:#e6efe7;border:1px solid #cfe0d2;
+    padding:8px 10px;border-radius:3px;line-height:1.5;
+  }
+  .card .claimed b{color:var(--ink);}
+  .card button.claim{margin-top:auto;}
+  .card-actions{margin-top:auto;display:flex;flex-direction:column;gap:7px;}
+  .btn.ghost{background:transparent;border:1.5px solid var(--line);color:var(--ink-soft);font-size:12px;padding:7px 12px;}
+  .btn.ghost:hover{border-color:var(--ink);color:var(--ink);}
+  .view-count{font-size:13px;color:var(--ink-soft);margin-bottom:12px;}
+  .view-count b{color:var(--accent);font-size:16px;}
+  .view-row{display:flex;gap:12px;align-items:center;padding:11px 0;border-bottom:1px solid var(--line);}
+  .view-row:last-child{border-bottom:none;}
+  .vidx{width:24px;height:24px;flex-shrink:0;border-radius:50%;background:var(--ink);color:var(--paper);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+  .vinfo{flex:1;min-width:0;}
+  .vsupplier{font-size:14px;font-weight:700;}
+  .vspu{font-size:12.5px;color:var(--ink-soft);margin-top:2px;}
+  .view-empty{padding:28px 12px;text-align:center;color:var(--ink-soft);font-size:14px;}
+
+  .empty{
+    border:2px dashed var(--line);border-radius:6px;padding:48px 24px;text-align:center;color:var(--ink-soft);
+    grid-column:1/-1;
+  }
+  .empty h3{margin:0 0 8px;color:var(--ink);font-size:18px;}
+
+  /* ---------- leaderboard ---------- */
+  aside.board{
+    margin:24px 0 4px;background:var(--paper);border:1px solid var(--line);
+    border-radius:6px;box-shadow:var(--shadow);overflow:hidden;
+  }
+  .board .bhead{background:var(--ink);color:var(--paper);padding:16px 18px;display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+  .board .bhead h3{margin:0;font-size:17px;font-weight:800;letter-spacing:.5px;}
+  .board .bhead p{margin:0;font-size:11.5px;color:#cfc8b6;letter-spacing:1px;}
+  .board ul{list-style:none;margin:0;padding:6px 0;max-height:362px;overflow-y:auto;scrollbar-width:thin;}
+  .board li{display:flex;gap:14px;align-items:center;padding:12px 22px;border-bottom:1px solid var(--line);}
+  .board li:last-child{border-bottom:none;}
+  .rank{font-size:18px;font-weight:800;width:30px;flex-shrink:0;text-align:center;color:var(--ink-soft);font-variant-numeric:tabular-nums;}
+  .rank.r1{color:var(--accent);} .rank.r2{color:var(--gold);} .rank.r3{color:var(--green);}
+  .merchant{flex:1;min-width:0;}
+  .merchant .nm{font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .merchant .tag{font-size:11.5px;color:var(--ink-soft);margin-top:2px;}
+  .qty{text-align:right;flex-shrink:0;}
+  .qty .n{font-size:22px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums;}
+  .qty .u{font-size:10px;color:var(--ink-soft);letter-spacing:1px;}
+  .board .bempty{padding:32px 18px;text-align:center;color:var(--ink-soft);font-size:13px;}
+
+  /* ---------- modal ---------- */
+  .mask{position:fixed;inset:0;background:rgba(29,27,22,.5);display:none;align-items:center;justify-content:center;z-index:100;padding:18px;}
+  .mask.show{display:flex;}
+  .modal{background:var(--paper);border-radius:8px;width:100%;max-width:520px;max-height:90vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);}
+  .modal .mhead{padding:20px 24px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;}
+  .modal .mhead h3{margin:0;font-size:19px;font-weight:800;}
+  .modal .mbody{padding:22px 24px;}
+  .modal .x{background:none;font-size:24px;color:var(--ink-soft);line-height:1;padding:0 4px;}
+  label.fld{display:block;margin-bottom:16px;}
+  label.fld span{display:block;font-size:13px;font-weight:600;margin-bottom:6px;}
+  label.fld span em{color:var(--accent);font-style:normal;}
+  input,textarea,select{
+    width:100%;font-family:inherit;font-size:14px;padding:10px 12px;border:1.5px solid var(--line);
+    border-radius:4px;background:#fff;color:var(--ink);
+  }
+  input:focus,textarea:focus,select:focus{outline:none;border-color:var(--accent);}
+  textarea{resize:vertical;min-height:120px;line-height:1.6;}
+  .hint{font-size:12px;color:var(--ink-soft);margin:-8px 0 16px;line-height:1.6;}
+  .hint code{background:#ece7da;padding:1px 5px;border-radius:3px;font-size:11.5px;}
+  .seg{display:flex;gap:4px;background:#ece7da;border-radius:6px;padding:4px;margin-bottom:18px;}
+  .seg-btn{flex:1;padding:8px 12px;border-radius:4px;font-size:13px;font-weight:600;color:var(--ink-soft);background:transparent;transition:all .15s ease;}
+  .seg-btn.active{background:var(--paper);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.08);}
+  .modal .mfoot{display:flex;justify-content:flex-end;gap:10px;margin-top:8px;}
+
+  .preview-prod{display:flex;gap:14px;align-items:center;background:#f1ede2;border-radius:6px;padding:12px;margin-bottom:18px;}
+  .preview-prod .pimg{width:64px;height:64px;border-radius:4px;background:#e0dacb;object-fit:cover;flex-shrink:0;}
+  .preview-prod .pt{font-size:14px;font-weight:600;}
+  .preview-prod .pc{font-size:12px;color:var(--accent);margin-top:3px;}
+
+  .toast{
+    position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--ink);color:var(--paper);padding:12px 22px;border-radius:6px;font-size:14px;
+    opacity:0;pointer-events:none;transition:all .25s ease;z-index:200;box-shadow:0 8px 24px rgba(0,0,0,.25);
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  @media(max-width:980px){
+    .layout{grid-template-columns:1fr;}
+    aside.board{position:static;}
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="top-row">
+      <div class="brand">
+        <h1>新奇特项目极速选品认领台</h1>
+        <span class="sub">Novelty Selection · Fast Claim Board</span>
+      </div>
+      <div class="top-actions">
+        <div class="search-box">
+          <span class="search-ico">🔍</span>
+          <input id="searchInput" type="text" placeholder="搜索产品标题…" autocomplete="off">
+          <button class="search-clear" id="searchClear" title="清空" style="display:none">×</button>
+        </div>
+        <button class="btn solid" id="btnUpload">＋ 买手上传清单</button>
+      </div>
+    </div>
+    <div class="tabs" id="tabs"></div>
+  </div>
+</header>
+
+<div class="wrap">
+  <!-- leaderboard (top, full width) -->
+  <aside class="board">
+    <div class="bhead">
+      <h3>🏆 供应商上新排行榜</h3>
+      <p>SUPPLIER LEADERBOARD · 默认展示 Top 5，下滑查看更多</p>
+    </div>
+    <ul id="board"></ul>
+    <div class="bempty" id="boardEmpty">暂无上新记录，认领产品后自动统计。</div>
+  </aside>
+
+  <!-- main -->
+  <main>
+    <div class="section-head">
+      <h2 id="catTitle">全部产品</h2>
+      <span class="meta" id="catMeta"></span>
+    </div>
+    <div class="grid" id="grid"></div>
+  </main>
+</div>
+
+<!-- upload modal -->
+<div class="mask" id="uploadMask">
+  <div class="modal">
+    <div class="mhead"><h3>买手上传产品清单</h3><button class="x" data-close>×</button></div>
+    <div class="mbody">
+      <div class="seg" id="modeSeg">
+        <button class="seg-btn active" data-mode="sheet">飞书表格粘贴</button>
+        <button class="seg-btn" data-mode="simple">简易格式</button>
+      </div>
+
+      <!-- sheet mode -->
+      <div id="modeSheet">
+        <p class="hint">
+          直接从飞书表格「玩具线索-新奇特」框选数据行复制，粘贴到下方（<b>Tab 分隔，自动识别列、自动跳过表头</b>）。<br>
+          识别规则：用 <b>一级类目</b> 作为标签 · <b>商品名称</b> 作为标题 · <b>商品首图url</b> 作为图片 · <b>买手打标</b> 作为图下标签（"买手精选"自动置顶）。
+        </p>
+        <label class="fld">
+          <span>粘贴表格内容 <em>*</em></span>
+          <textarea id="sheetInput" placeholder="玩具与爱好	积木拼插玩具	拼插积木	超大号恐龙蛋拼装玩具	https://...www800-800
+玩具与爱好	户外运动玩具	球类玩具	儿童发光弹力球	https://...www1170-1170"></textarea>
+        </label>
+      </div>
+
+      <!-- simple mode -->
+      <div id="modeSimple" style="display:none">
+        <p class="hint">
+          每行一个产品，<b>必须使用英文竖线 <code>|</code> 分隔</b>字段，顺序为：<br>
+          <code>类目 | 产品标题 | 图片URL(可选)</code><br>
+          例如：<code>玩具与爱好 | 拼装积木套装 | https://...jpg</code>
+        </p>
+        <label class="fld">
+          <span>产品清单 <em>*</em></span>
+          <textarea id="bulkInput" placeholder="积木拼插玩具 | 超大号恐龙蛋拼装玩具 | https://picsum.photos/seed/toy/400
+户外运动玩具 | 儿童发光弹力球"></textarea>
+        </label>
+      </div>
+
+      <div class="mfoot">
+        <button class="btn" data-close>取消</button>
+        <button class="btn solid" id="btnParse">解析并发布</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- claim modal -->
+<div class="mask" id="claimMask">
+  <div class="modal">
+    <div class="mhead"><h3>商家认领 · 填写信息</h3><button class="x" data-close>×</button></div>
+    <div class="mbody">
+      <div class="preview-prod" id="claimPreview"></div>
+      <label class="fld">
+        <span>SPU 编号 <em>*</em></span>
+        <input id="cSpu" placeholder="如：S251019042240，多个 SPU 用空格隔开">
+      </label>
+      <p class="hint" style="margin:-10px 0 16px">
+        SPU 格式：字母 <code>S</code> + 数字（如 <code>S251019042240</code>）。<b>可一次填写多个，用空格隔开</b>；格式错误或留空将提交失败、不予计入。
+      </p>
+      <label class="fld">
+        <span>供应商名称 <em>*</em></span>
+        <input id="cSupplier" placeholder="如：宁波家居制造有限公司">
+      </label>
+      <div class="mfoot">
+        <button class="btn" data-close>取消</button>
+        <button class="btn solid" id="btnClaim">确认提交</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- view claims modal -->
+<div class="mask" id="viewMask">
+  <div class="modal">
+    <div class="mhead"><h3>已报名商家名单</h3><button class="x" data-close>×</button></div>
+    <div class="mbody">
+      <div class="preview-prod" id="viewPreview"></div>
+      <div id="viewList"></div>
+      <div class="mfoot">
+        <button class="btn solid" data-close>关闭</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const LS_KEY = "buyer_selection_board_v1";
+const FAV_KEY = "buyer_selection_favs_v1";
+let state = { products: [] };   // each: {id,cat,title,img,tag,claims:[{spu,supplier,at}]}
+let favs = [];                  // 收藏的产品 id 列表
+let activeCat = "__all__";
+let claimingId = null;
+let searchQuery = "";           // 产品标题搜索关键词
+
+/* ---------- persistence ---------- */
+function load(){
+  try{ const r = localStorage.getItem(LS_KEY); if(r) state = JSON.parse(r); }catch(e){}
+  try{ const f = localStorage.getItem(FAV_KEY); if(f) favs = JSON.parse(f)||[]; }catch(e){}
+  if(!state.products) state.products = [];
+  if(!Array.isArray(favs)) favs = [];
+  // 兼容旧数据：单个 claimed 对象 -> claims 数组
+  state.products.forEach(p=>{
+    if(!Array.isArray(p.claims)) p.claims = p.claimed ? [p.claimed] : [];
+    delete p.claimed;
+  });
+}
+function save(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch(e){ /* 预览环境可能禁用本地存储，忽略以保证页面可用 */ } }
+function saveFavs(){ try{ localStorage.setItem(FAV_KEY, JSON.stringify(favs)); }catch(e){} }
+function isFav(id){ return favs.indexOf(id)>=0; }
+function toggleFav(id){
+  const i = favs.indexOf(id);
+  if(i>=0){ favs.splice(i,1); toast("已取消收藏"); }
+  else{ favs.push(id); toast("已加入我的收藏"); }
+  saveFavs(); renderTabs(); renderGrid();
+}
+
+/* 将一行拆成字段：只按竖线分隔，兼容全角｜，避免空格/逗号造成的类目误判 */
+function splitLine(line){
+  return line.replace(/｜/g,"|").split("|");
+}
+
+/* ---------- helpers ---------- */
+function cats(){
+  const m = {};
+  state.products.forEach(p=>{ m[p.cat]=(m[p.cat]||0)+1; });
+  return m;
+}
+function esc(s){return (s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),2200);}
+
+/* ---------- render ---------- */
+function renderTabs(){
+  const map = cats();
+  const total = state.products.length;
+  const el = document.getElementById("tabs");
+  let html = `<button class="tab tab-fav ${activeCat==='__fav__'?'active':''}" data-cat="__fav__">❤ 我的收藏 <span class="cnt">${favs.length}</span></button>`;
+  html += `<button class="tab ${activeCat==='__all__'?'active':''}" data-cat="__all__">全部 <span class="cnt">${total}</span></button>`;
+  Object.keys(map).sort((a,b)=>map[b]-map[a]).forEach(c=>{
+    html += `<button class="tab ${activeCat===c?'active':''}" data-cat="${esc(c)}">${esc(c)} <span class="cnt">${map[c]}</span></button>`;
+  });
+  el.innerHTML = html;
+  el.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{
+    activeCat=b.dataset.cat;
+    if(searchQuery){ searchQuery=""; const si=document.getElementById("searchInput"); if(si)si.value=""; const sc=document.getElementById("searchClear"); if(sc)sc.style.display="none"; }
+    renderTabs();renderGrid();
+  });
+}
+
+function isPick(p){ return /精选/.test(p.tag||""); }   // 买手精选品优先
+
+function renderGrid(){
+  const grid = document.getElementById("grid");
+  const favView = activeCat==="__fav__";
+  const q = searchQuery.trim().toLowerCase();
+  const searching = q.length>0;
+  // 有搜索词时跨全部产品搜索标题；否则按当前标签/收藏筛选
+  const list = state.products
+    .filter(p=> searching
+      ? (p.title||"").toLowerCase().indexOf(q)>=0
+      : (favView ? isFav(p.id) : (activeCat==="__all__"||p.cat===activeCat)))
+    .slice().sort((a,b)=>(isPick(b)?1:0)-(isPick(a)?1:0));   // 买手精选品排在前面
+  document.getElementById("catTitle").textContent = searching
+    ? `搜索：“${searchQuery.trim()}”`
+    : (favView?"我的收藏":(activeCat==="__all__"?"全部产品":activeCat));
+  const claimedN = list.filter(p=>p.claims&&p.claims.length).length;
+  const pickN = list.filter(isPick).length;
+  document.getElementById("catMeta").textContent = searching
+    ? `命中 ${list.length} 款 · 买手精选 ${pickN} 款 · 已有报名 ${claimedN} 款`
+    : `共 ${list.length} 款 · 买手精选 ${pickN} 款 · 已有报名 ${claimedN} 款`;
+
+  if(!list.length){
+    grid.innerHTML = searching
+      ? `<div class="empty"><h3>未找到匹配的产品</h3><p>没有标题包含「${esc(searchQuery.trim())}」的产品，换个关键词试试。</p></div>`
+      : (favView
+        ? `<div class="empty"><h3>还没有收藏的产品</h3><p>在产品图片上点击 ♡ 收藏按钮，收藏的产品会出现在这里。</p></div>`
+        : `<div class="empty"><h3>还没有产品</h3><p>点击右上角「＋ 买手上传清单」上传产品后，将自动按类目生成标签。</p></div>`);
+    return;
+  }
+  grid.innerHTML = list.map(p=>{
+    const img = p.img ? `<img src="${esc(p.img)}" alt="" onerror="this.parentNode.innerHTML='<span class=\\'noimg\\'>无图片</span>'">` : `<span class="noimg">无图片</span>`;
+    const corner = isPick(p) ? `<span class="pick-corner">⭐ 买手精选</span>` : ``;
+    const favBtn = `<button class="fav-btn${isFav(p.id)?' on':''}" data-fav="${p.id}" title="${isFav(p.id)?'取消收藏':'收藏'}">${isFav(p.id)?'❤':'♡'}</button>`;
+    const tagBadge = p.tag
+      ? `<span class="mark-tag ${isPick(p)?'mark-pick':'mark-normal'}">${isPick(p)?'⭐ ':''}${esc(p.tag)}</span>`
+      : ``;
+    const n = (p.claims&&p.claims.length)||0;
+    const action = `<div class="card-actions">
+        <button class="btn solid claim" data-claim="${p.id}">认领并填写</button>
+        <button class="btn ghost view" data-view="${p.id}">查看报名商家${n?` (${n})`:''}</button>
+      </div>`;
+    return `<article class="card${isPick(p)?' card-pick':''}">
+      <div class="ph">${corner}${favBtn}${img}</div>
+      <div class="body">
+        ${tagBadge}
+        <span class="cat-pill">${esc(p.cat)}</span>
+        <div class="title">${esc(p.title)}</div>
+        ${action}
+      </div>
+    </article>`;
+  }).join("");
+  grid.querySelectorAll("[data-claim]").forEach(b=>b.onclick=()=>openClaim(b.dataset.claim));
+  grid.querySelectorAll("[data-view]").forEach(b=>b.onclick=()=>openView(b.dataset.view));
+  grid.querySelectorAll("[data-fav]").forEach(b=>b.onclick=()=>toggleFav(b.dataset.fav));
+}
+
+function renderBoard(){
+  const m = {};
+  state.products.forEach(p=>{
+    (p.claims||[]).forEach(c=>{
+      const name = c.supplier;
+      if(!name) return;
+      if(!m[name]) m[name]={n:0,cats:{}};
+      m[name].n++;
+      m[name].cats[p.cat]=(m[name].cats[p.cat]||0)+1;
+    });
+  });
+  const rows = Object.keys(m).map(name=>{
+    const topCat = Object.keys(m[name].cats).sort((a,b)=>m[name].cats[b]-m[name].cats[a])[0];
+    return {name,n:m[name].n,topCat};
+  }).sort((a,b)=>b.n-a.n);
+
+  const ul = document.getElementById("board");
+  const empty = document.getElementById("boardEmpty");
+  if(!rows.length){ ul.innerHTML=""; empty.style.display="block"; return; }
+  empty.style.display="none";
+  ul.innerHTML = rows.map((r,i)=>`
+    <li>
+      <span class="rank ${i<3?'r'+(i+1):''}">${i+1}</span>
+      <div class="merchant">
+        <div class="nm">${esc(r.name)}</div>
+        <div class="tag">主营类目 · ${esc(r.topCat)}</div>
+      </div>
+      <div class="qty"><div class="n">${r.n}</div><div class="u">款上新</div></div>
+    </li>`).join("");
+}
+
+function renderAll(){renderTabs();renderGrid();renderBoard();}
+
+/* ---------- modals ---------- */
+function openMask(id){document.getElementById(id).classList.add("show");}
+function closeMask(){document.querySelectorAll(".mask").forEach(m=>m.classList.remove("show"));}
+document.querySelectorAll("[data-close]").forEach(b=>b.onclick=closeMask);
+document.querySelectorAll(".mask").forEach(m=>m.onclick=e=>{if(e.target===m)closeMask();});
+
+document.getElementById("btnUpload").onclick=()=>openMask("uploadMask");
+
+/* 产品标题搜索 */
+const searchInput = document.getElementById("searchInput");
+const searchClear = document.getElementById("searchClear");
+searchInput.addEventListener("input",()=>{
+  searchQuery = searchInput.value;
+  searchClear.style.display = searchQuery ? "flex" : "none";
+  renderTabs();renderGrid();
+});
+searchClear.onclick=()=>{
+  searchQuery=""; searchInput.value=""; searchClear.style.display="none";
+  searchInput.focus(); renderTabs();renderGrid();
+};
+
+/* 上传模式切换 */
+let uploadMode="sheet";
+document.querySelectorAll("#modeSeg .seg-btn").forEach(b=>b.onclick=()=>{
+  uploadMode=b.dataset.mode;
+  document.querySelectorAll("#modeSeg .seg-btn").forEach(x=>x.classList.toggle("active",x===b));
+  document.getElementById("modeSheet").style.display = uploadMode==="sheet"?"block":"none";
+  document.getElementById("modeSimple").style.display = uploadMode==="simple"?"block":"none";
+});
+
+/* 判断是否像表头行（包含飞书表格的列名关键词） */
+function isHeaderRow(cells){
+  const joined = cells.join("");
+  return /类目|商品名称|首图|商品图片|买手打标|name|url/i.test(joined) && /类目|name|首图/i.test(joined);
+}
+
+function addProduct(cat,title,img,seed,tag){
+  if(!cat||!title) return false;
+  state.products.push({id:"p"+Date.now()+"_"+seed+"_"+Math.random().toString(36).slice(2,6),cat:cat,title:title,img:img||"",tag:tag||"",claims:[]});
+  return true;
+}
+
+document.getElementById("btnParse").onclick=()=>{
+  let added=0;
+  if(uploadMode==="sheet"){
+    const raw=document.getElementById("sheetInput").value.replace(/\r/g,"");
+    if(!raw.trim()){toast("请粘贴飞书表格内容");return;}
+    raw.split(/\n/).forEach((line,i)=>{
+      if(!line.trim()) return;
+      const cells=line.split("\t").map(s=>s.trim());
+      if(isHeaderRow(cells)) return;                 // 跳过表头
+      // 列：0一级 1二级 2三级 3商品名称 4首图url 5商品图片 6买手打标
+      const cat=cells[0]||cells[1];                   // 默认使用一级类目
+      const title=cells[3];
+      let img=cells[4]||"";
+      img=img.replace(/^IMAGE\(.*\)$/i,"");           // 排除 IMAGE() 公式文本
+      if(!/^https?:\/\//i.test(img)) img="";
+      const tag=cells[6]||"";                          // G列 买手打标
+      if(addProduct(cat,title,img,i,tag)) added++;
+    });
+    if(!added){toast("未解析到有效行：请确认从飞书表格框选了数据行后再粘贴（需含商品名称列）");return;}
+    document.getElementById("sheetInput").value="";
+  }else{
+    const raw=document.getElementById("bulkInput").value.trim();
+    if(!raw){toast("请输入产品清单");return;}
+    raw.split(/\r?\n+/).forEach((line,i)=>{
+      if(!line.trim()) return;
+      const parts=splitLine(line).map(s=>s.trim());
+      if(parts.length<2||!parts[0]||!parts[1]) return;
+      if(addProduct(parts[0],parts[1],parts[2]||"",i,parts[3]||"")) added++;
+    });
+    if(!added){toast("未解析到有效行：每行至少需要「类目」和「标题」两个字段，用 | 分隔");return;}
+    document.getElementById("bulkInput").value="";
+  }
+  save();closeMask();renderAll();
+  toast(`成功发布 ${added} 款产品`);
+};
+
+function openClaim(id){
+  claimingId=id;
+  const p = state.products.find(x=>x.id===id);
+  if(!p) return;
+  const img = p.img?`<img class="pimg" src="${esc(p.img)}" onerror="this.style.display='none'">`:`<div class="pimg"></div>`;
+  document.getElementById("claimPreview").innerHTML = `${img}<div><div class="pt">${esc(p.title)}</div><div class="pc">${esc(p.cat)}</div></div>`;
+  document.getElementById("cSpu").value="";
+  document.getElementById("cSupplier").value="";
+  openMask("claimMask");
+}
+
+/* 校验单个 SPU 是否合法：字母 S（不区分大小写）+ 至少 6 位数字 */
+function isValidSpu(s){ return /^[Ss]\d{6,}$/.test(s); }
+
+document.getElementById("btnClaim").onclick=()=>{
+  const spuRaw=document.getElementById("cSpu").value.trim();
+  const supplier=document.getElementById("cSupplier").value.trim();
+  if(!spuRaw||!supplier){toast("提交失败：请填写 SPU 编号与供应商名称");return;}
+  // 支持一次填写多个 SPU，按空格/换行拆分
+  const spuList=spuRaw.split(/[\s,，、]+/).map(s=>s.trim()).filter(Boolean);
+  if(!spuList.length){toast("提交失败：SPU 不能为空");return;}
+  const bad=spuList.filter(s=>!isValidSpu(s));
+  if(bad.length){
+    toast(`提交失败：SPU 格式不正确「${bad.join("、")}」，应为 S 开头加数字（如 S251019042240）`);
+    return;
+  }
+  // 去重并规范化为大写 S
+  const spu=[...new Set(spuList.map(s=>s.replace(/^s/,"S")))].join(" ");
+  const p = state.products.find(x=>x.id===claimingId);
+  if(p){ if(!Array.isArray(p.claims)) p.claims=[]; p.claims.push({spu,supplier,at:Date.now()}); save(); }
+  closeMask();renderAll();
+  toast(`报名成功，已计入 ${spuList.length} 个 SPU`);
+};
+
+/* 查看已报名商家名单 */
+function openView(id){
+  const p = state.products.find(x=>x.id===id);
+  if(!p) return;
+  const img = p.img?`<img class="pimg" src="${esc(p.img)}" onerror="this.style.display='none'">`:`<div class="pimg"></div>`;
+  document.getElementById("viewPreview").innerHTML = `${img}<div><div class="pt">${esc(p.title)}</div><div class="pc">${esc(p.cat)}</div></div>`;
+  const claims = p.claims||[];
+  const box = document.getElementById("viewList");
+  if(!claims.length){
+    box.innerHTML = `<div class="view-empty">暂无商家报名，快邀请商家来认领吧。</div>`;
+  }else{
+    box.innerHTML = `<div class="view-count">已有 <b>${claims.length}</b> 家商家报名</div>` + claims.map((c,i)=>`
+      <div class="view-row">
+        <span class="vidx">${i+1}</span>
+        <div class="vinfo">
+          <div class="vsupplier">${esc(c.supplier)}</div>
+          <div class="vspu">SPU：${esc(c.spu)}</div>
+        </div>
+      </div>`).join("");
+  }
+  openMask("viewMask");
+}
+
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeMask();});
+
+load();renderAll();
+</script>
+</body>
+</html>
